@@ -63,6 +63,12 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         DocumentAsBase64String: cvBase64,
         DocumentLastModified: currentDate,
+        Configuration: {
+          SkillsSettings: {
+            TaxonomyVersion: "V2",
+            Normalize: true,
+          },
+        },
       }),
     })
 
@@ -96,6 +102,12 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         DocumentAsBase64String: jobBase64,
         DocumentLastModified: currentDate,
+        Configuration: {
+          SkillsSettings: {
+            TaxonomyVersion: "V2",
+            Normalize: true,
+          },
+        },
       }),
     })
 
