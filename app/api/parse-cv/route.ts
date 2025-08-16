@@ -28,10 +28,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing API configuration" }, { status: 500 })
     }
 
-    console.log("[v0] Using API endpoint:", `${baseUrl}/parser/resume`)
+    const apiUrl = `${baseUrl.replace(/\/$/, "")}/parser/resume`
+    console.log("[v0] Using API endpoint:", apiUrl)
 
     // Parse CV with Textkernel
-    const parseResponse = await fetch(`${baseUrl}/parser/resume`, {
+    const parseResponse = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -43,9 +44,6 @@ export async function POST(request: NextRequest) {
         DocumentLastModified: new Date().toISOString().split("T")[0],
         Configuration: {
           OutputHtml: true,
-          OutputRtf: false,
-          OutputPdf: false,
-          OutputCandidateImage: false,
         },
       }),
     })
