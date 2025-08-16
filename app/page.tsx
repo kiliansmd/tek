@@ -1,14 +1,11 @@
-import { CVScoringApp } from "@/components/cv-scoring-app"
-import { ErrorBoundary } from "@/components/error-boundary"
+import { SimpleCVParser } from "@/components/simple-cv-parser"
 import { Toaster } from "@/components/ui/toaster"
 
 export default function Home() {
   return (
-    <ErrorBoundary>
-      <main className="min-h-screen bg-background">
-        <CVScoringApp />
-        <Toaster />
-      </main>
-    </ErrorBoundary>
+    <main className="min-h-screen bg-background">
+      <SimpleCVParser />
+      <Toaster />
+    </main>
   )
 }
