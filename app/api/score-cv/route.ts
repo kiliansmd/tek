@@ -120,12 +120,10 @@ export async function POST(request: NextRequest) {
     // Now score the resume against the job
     console.log("[v0] Starting scoring with data structure:")
     const scoringPayload = {
-      TargetResumes: [
-        {
-          Id: `resume_${Date.now()}`,
-          ResumeData: resumeData.Value.ResumeData,
-        },
-      ],
+      SourceResume: {
+        Id: `source_resume_${Date.now()}`,
+        ResumeData: resumeData.Value.ResumeData,
+      },
       TargetJobs: [
         {
           Id: `job_${Date.now()}`,
