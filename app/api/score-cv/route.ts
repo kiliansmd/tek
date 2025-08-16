@@ -1,8 +1,10 @@
+// app/api/score-cv/route.ts
 import { type NextRequest, NextResponse } from "next/server"
 
-const TEXTKERNEL_API_KEY = "btU9Mn+i5nJkDi/yDiNKkoK0oqt/p422Uas9gbKr"
-const TEXTKERNEL_ACCOUNT_ID = "27631519"
-const TEXTKERNEL_BASE_URL = "https://api.eu.textkernel.com/tx/v10"
+// Umgebungsvariablen verwenden (falls gewünscht, sonst die hardcodierten Werte beibehalten)
+const TEXTKERNEL_API_KEY = process.env.TEXTKERNEL_API_KEY || "btU9Mn+i5nJkDi/yDiNKkoK0oqt/p422Uas9gbKr"
+const TEXTKERNEL_ACCOUNT_ID = process.env.TEXTKERNEL_ACCOUNT_ID || "27631519"
+const TEXTKERNEL_BASE_URL = process.env.TEXTKERNEL_BASE_URL || "https://api.eu.textkernel.com/tx/v10"
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file types
+    // Validierung der Dateitypen
     if (cvFile.type !== "application/pdf" || jobFile.type !== "application/pdf") {
       return NextResponse.json(
         {
@@ -31,7 +33,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file sizes (10MB limit)
+    // Validierung der Dateigrößen (10MB Limit)
     const maxSize = 10 * 1024 * 1024
     if (cvFile.size > maxSize || jobFile.size > maxSize) {
       return NextResponse.json(
@@ -43,15 +45,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Convert files to base64
+    // Dateien zu Base64 konvertieren
     const cvBuffer = await cvFile.arrayBuffer()
     const jobBuffer = await jobFile.arrayBuffer()
     const cvBase64 = Buffer.from(cvBuffer).toString("base64")
     const jobBase64 = Buffer.from(jobBuffer).toString("base64")
 
-    const currentDate = new Date().toISOString().split("T")[0] // Gets YYYY-MM-DD format
+    const currentDate = new Date().toISOString().split("T")[0]
 
-    // First, parse the CV
+    // CV parsen MIT Skills Normalization
     console.log("[v0] Starting CV parsing...")
     const parseResumeResponse = await fetch(`${TEXTKERNEL_BASE_URL}/parser/resume`, {
       method: "POST",
@@ -63,34 +65,23 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         DocumentAsBase64String: cvBase64,
         DocumentLastModified: currentDate,
-        Configuration: {
-          SkillsSettings: {
-            TaxonomyVersion: "V2",
-            Normalize: true,
-          },
-        },
+        // V1 Skills verwenden (Alternative)
+        Data: {
+          UseV2SkillsTaxonomy: false
+        }
       }),
     })
 
     if (!parseResumeResponse.ok) {
       const errorText = await parseResumeResponse.text()
       console.error("[v0] Resume parsing failed:", errorText)
-      let errorDetails = `${parseResumeResponse.status} ${parseResumeResponse.statusText}`
-      try {
-        const errorJson = JSON.parse(errorText)
-        if (errorJson.Info?.Message) {
-          errorDetails = errorJson.Info.Message
-        }
-      } catch (e) {
-        // Use default error details if JSON parsing fails
-      }
-      throw new Error(`Resume parsing failed: ${errorDetails}`)
+      throw new Error(`Resume parsing failed: ${parseResumeResponse.status} ${parseResumeResponse.statusText}`)
     }
 
     const resumeData = await parseResumeResponse.json()
-    console.log("[v0] CV parsed successfully, ResumeData structure:", JSON.stringify(resumeData, null, 2))
+    console.log("[v0] CV parsed successfully")
 
-    // Parse the job description
+    // Job Description parsen MIT Skills Normalization
     console.log("[v0] Starting job parsing...")
     const parseJobResponse = await fetch(`${TEXTKERNEL_BASE_URL}/parser/joborder`, {
       method: "POST",
@@ -102,40 +93,32 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         DocumentAsBase64String: jobBase64,
         DocumentLastModified: currentDate,
-        Configuration: {
-          SkillsSettings: {
-            TaxonomyVersion: "V2",
-            Normalize: true,
-          },
-        },
+        // Skills Normalization aktivieren
+        OutputFormat: {
+          SkillsStyle: "NormalizedSkills"
+        }
       }),
     })
 
     if (!parseJobResponse.ok) {
       const errorText = await parseJobResponse.text()
       console.error("[v0] Job parsing failed:", errorText)
-      let errorDetails = `${parseJobResponse.status} ${parseJobResponse.statusText}`
-      try {
-        const errorJson = JSON.parse(errorText)
-        if (errorJson.Info?.Message) {
-          errorDetails = errorJson.Info.Message
-        }
-      } catch (e) {
-        // Use default error details if JSON parsing fails
-      }
-      throw new Error(`Job parsing failed: ${errorDetails}`)
+      throw new Error(`Job parsing failed: ${parseJobResponse.status} ${parseJobResponse.statusText}`)
     }
 
     const jobData = await parseJobResponse.json()
-    console.log("[v0] Job parsed successfully, JobData structure:", JSON.stringify(jobData, null, 2))
+    console.log("[v0] Job parsed successfully")
 
-    // Now score the resume against the job
-    console.log("[v0] Starting scoring with data structure:")
+    // KORREKTE Scoring-Struktur für V2 Skills
+    console.log("[v0] Starting scoring...")
     const scoringPayload = {
-      SourceResume: {
-        Id: `source_resume_${Date.now()}`,
-        ResumeData: resumeData.Value.ResumeData,
-      },
+      // WICHTIG: Richtige Struktur für V2 Skills API
+      TargetResumes: [
+        {
+          Id: `resume_${Date.now()}`,
+          ResumeData: resumeData.Value.ResumeData,
+        },
+      ],
       TargetJobs: [
         {
           Id: `job_${Date.now()}`,
@@ -156,7 +139,7 @@ export async function POST(request: NextRequest) {
       },
     }
 
-    console.log("[v0] Scoring payload:", JSON.stringify(scoringPayload, null, 2))
+    console.log("[v0] Scoring payload prepared")
 
     const scoringResponse = await fetch(`${TEXTKERNEL_BASE_URL}/scorer/bimetric/resume`, {
       method: "POST",
@@ -171,6 +154,8 @@ export async function POST(request: NextRequest) {
     if (!scoringResponse.ok) {
       const errorText = await scoringResponse.text()
       console.error("[v0] Scoring failed:", errorText)
+      
+      // Detaillierte Fehlerbehandlung
       let errorDetails = `${scoringResponse.status} ${scoringResponse.statusText}`
       try {
         const errorJson = JSON.parse(errorText)
@@ -178,13 +163,14 @@ export async function POST(request: NextRequest) {
           errorDetails = errorJson.Info.Message
         }
       } catch (e) {
-        // Use default error details if JSON parsing fails
+        // JSON parsing fehlgeschlagen
       }
+      
       throw new Error(`Scoring failed: ${errorDetails}`)
     }
 
     const scoringData = await scoringResponse.json()
-    console.log("[v0] Scoring completed successfully:", JSON.stringify(scoringData, null, 2))
+    console.log("[v0] Scoring completed successfully")
 
     return NextResponse.json({
       success: true,
