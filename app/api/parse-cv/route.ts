@@ -62,6 +62,15 @@ export async function POST(request: NextRequest) {
     const parseResult = await parseResponse.json()
     console.log("[v0] Parse successful, result keys:", Object.keys(parseResult))
 
+    if (parseResult.Value?.ResumeData) {
+      console.log("[v0] ResumeData keys:", Object.keys(parseResult.Value.ResumeData))
+      console.log("[v0] ContactInformation:", JSON.stringify(parseResult.Value.ResumeData.ContactInformation, null, 2))
+      console.log("[v0] Skills:", JSON.stringify(parseResult.Value.ResumeData.Skills, null, 2))
+      console.log("[v0] EmploymentHistory:", JSON.stringify(parseResult.Value.ResumeData.EmploymentHistory, null, 2))
+      console.log("[v0] Education:", JSON.stringify(parseResult.Value.ResumeData.Education, null, 2))
+      console.log("[v0] Languages:", JSON.stringify(parseResult.Value.ResumeData.Languages, null, 2))
+    }
+
     return NextResponse.json({
       success: true,
       parseResult: parseResult,

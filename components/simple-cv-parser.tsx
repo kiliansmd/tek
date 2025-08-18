@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, Upload, FileText } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { CVDataEditor } from "./cv-data-editor" // Import CVDataEditor component
 
 export function SimpleCVParser() {
   const [isLoading, setIsLoading] = useState(false)
@@ -91,10 +92,10 @@ export function SimpleCVParser() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className="container mx-auto p-6 max-w-6xl">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">CV Parser Test</h1>
-        <p className="text-muted-foreground">Test the Textkernel CV parsing functionality</p>
+        <h1 className="text-3xl font-bold mb-2">CV Parser & Editor</h1>
+        <p className="text-muted-foreground">Parse CVs with Textkernel API and edit the extracted data</p>
       </div>
 
       <Card className="mb-6">
@@ -132,81 +133,30 @@ export function SimpleCVParser() {
       </Card>
 
       {parseResult && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Parse Results
-              <Button onClick={downloadResult} variant="outline" size="sm">
-                Download JSON
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {parseResult.Value?.ResumeData?.ContactInformation && (
-                <div>
-                  <h3 className="font-semibold mb-2">Contact Information</h3>
-                  <div className="bg-muted p-3 rounded text-sm">
-                    <p>
-                      <strong>Name:</strong>{" "}
-                      {parseResult.Value.ResumeData.ContactInformation.CandidateName?.FormattedName || "N/A"}
-                    </p>
-                    <p>
-                      <strong>Email:</strong>{" "}
-                      {parseResult.Value.ResumeData.ContactInformation.EmailAddresses?.[0] || "N/A"}
-                    </p>
-                    <p>
-                      <strong>Phone:</strong>{" "}
-                      {parseResult.Value.ResumeData.ContactInformation.Telephones?.[0]?.Raw || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              )}
+        <div className="space-y-6">
+          <CVDataEditor
+            parseResult={parseResult}
+            onDataChange={(data) => {
+              console.log("[v0] CV data updated:", data)
+            }}
+          />
 
-              {parseResult.Value?.ResumeData?.Skills && (
-                <div>
-                  <h3 className="font-semibold mb-2">
-                    Skills (
-                    {Array.isArray(parseResult.Value.ResumeData.Skills)
-                      ? parseResult.Value.ResumeData.Skills.length
-                      : "N/A"}
-                    )
-                  </h3>
-                  <div className="bg-muted p-3 rounded text-sm max-h-32 overflow-y-auto">
-                    {Array.isArray(parseResult.Value.ResumeData.Skills) ? (
-                      <>
-                        {parseResult.Value.ResumeData.Skills.slice(0, 10).map((skill: any, index: number) => (
-                          <span key={index} className="inline-block bg-background px-2 py-1 rounded mr-2 mb-1">
-                            {skill.Name || skill}
-                          </span>
-                        ))}
-                        {parseResult.Value.ResumeData.Skills.length > 10 && (
-                          <span className="text-muted-foreground">
-                            ...and {parseResult.Value.ResumeData.Skills.length - 10} more
-                          </span>
-                        )}
-                      </>
-                    ) : (
-                      <div className="text-muted-foreground">
-                        Skills data format: {typeof parseResult.Value.ResumeData.Skills}
-                        <pre className="mt-2 text-xs">
-                          {JSON.stringify(parseResult.Value.ResumeData.Skills, null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <h3 className="font-semibold mb-2">Raw Data Preview</h3>
-                <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-64">
-                  {JSON.stringify(parseResult, null, 2)}
-                </pre>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                Raw Parse Results
+                <Button onClick={downloadResult} variant="outline" size="sm">
+                  Download Original JSON
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-64">
+                {JSON.stringify(parseResult, null, 2)}
+              </pre>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   )
