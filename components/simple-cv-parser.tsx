@@ -165,17 +165,34 @@ export function SimpleCVParser() {
 
               {parseResult.Value?.ResumeData?.Skills && (
                 <div>
-                  <h3 className="font-semibold mb-2">Skills ({parseResult.Value.ResumeData.Skills.length})</h3>
+                  <h3 className="font-semibold mb-2">
+                    Skills (
+                    {Array.isArray(parseResult.Value.ResumeData.Skills)
+                      ? parseResult.Value.ResumeData.Skills.length
+                      : "N/A"}
+                    )
+                  </h3>
                   <div className="bg-muted p-3 rounded text-sm max-h-32 overflow-y-auto">
-                    {parseResult.Value.ResumeData.Skills.slice(0, 10).map((skill: any, index: number) => (
-                      <span key={index} className="inline-block bg-background px-2 py-1 rounded mr-2 mb-1">
-                        {skill.Name}
-                      </span>
-                    ))}
-                    {parseResult.Value.ResumeData.Skills.length > 10 && (
-                      <span className="text-muted-foreground">
-                        ...and {parseResult.Value.ResumeData.Skills.length - 10} more
-                      </span>
+                    {Array.isArray(parseResult.Value.ResumeData.Skills) ? (
+                      <>
+                        {parseResult.Value.ResumeData.Skills.slice(0, 10).map((skill: any, index: number) => (
+                          <span key={index} className="inline-block bg-background px-2 py-1 rounded mr-2 mb-1">
+                            {skill.Name || skill}
+                          </span>
+                        ))}
+                        {parseResult.Value.ResumeData.Skills.length > 10 && (
+                          <span className="text-muted-foreground">
+                            ...and {parseResult.Value.ResumeData.Skills.length - 10} more
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-muted-foreground">
+                        Skills data format: {typeof parseResult.Value.ResumeData.Skills}
+                        <pre className="mt-2 text-xs">
+                          {JSON.stringify(parseResult.Value.ResumeData.Skills, null, 2)}
+                        </pre>
+                      </div>
                     )}
                   </div>
                 </div>

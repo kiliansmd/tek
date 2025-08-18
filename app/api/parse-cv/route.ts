@@ -42,9 +42,6 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         DocumentAsBase64String: base64,
         DocumentLastModified: new Date().toISOString().split("T")[0],
-        Configuration: {
-          OutputHtml: true,
-        },
       }),
     })
 
